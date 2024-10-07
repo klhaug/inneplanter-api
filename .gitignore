@@ -1,0 +1,15 @@
+# Ignore node modules
+node_modules/
+
+# Logs
+logs/
+*.log
+
+# Environment variables
+.env
+
+# Build output
+dist/
+
+# Ignore system files (macOS specific)
+.DS_Store
