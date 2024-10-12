@@ -34,6 +34,10 @@ app.post("/submit", (req, res) => {
     // .catch(err => res.status(400).json(err))
 })
 
+app.get('/plantdatabase', (req, res) => {
+    res.json(testDatabase)
+})
+
 // app.get("/plants", (req, res) => {
 //     res.json(testDatabase[0])
 // })
