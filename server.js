@@ -2,11 +2,14 @@ const express = require('express');
 const bodyParser = require('body-parser')
 const cors = require("cors");
 const path = require('path');
+const multer = require('multer')
 // const { default: test } = require('node:test');
 
 const app = express();
 
 app.use(express.static(path.join(__dirname, 'public')));
+
+const upload = multer({ dest: './public/images' })
 
 const testDatabase = [
     {
@@ -27,10 +30,11 @@ app.get("/", (req, res) => {
     res.json(testDatabase[testDatabase.length - 1])
 });
 
-app.post("/submit", (req, res) => {
+app.post("/submit", upload.single('uploaded_file'), (req, res) => {
     testDatabase.push(req.body)
-    console.log(testDatabase)
+    // console.log(testDatabase)
     res.json(testDatabase)
+    console.log(req.file, req.body)
     // .catch(err => res.status(400).json(err))
 })
 
