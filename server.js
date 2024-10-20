@@ -22,6 +22,14 @@ const storage = multer.diskStorage({
     }
   });
 
+
+  //SET UP SERVER SIDE IMAGE RENDERING
+//SENDING THE IMAGE TO GOOGLE CLOUD
+
+// Initialize Google Cloud Storage
+const storage = new Storage();
+const bucket = storage.bucket('your-bucket-name');
+
  
 // Initialize Multer with the storage config
 const upload = multer({
