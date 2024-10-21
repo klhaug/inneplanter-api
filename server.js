@@ -3,7 +3,23 @@ const bodyParser = require('body-parser')
 const cors = require("cors");
 const path = require('path');
 const multer = require('multer')
+const knex = require ('knex');
 // const { default: test } = require('node:test');
+
+const db = knex({
+  client: 'pg',
+  connection: {
+    host : 'localhost', // HER Må VI OPPDATERE NÅR VI SKAL HOSTE DETTE ET ANNET STED
+    user : 'kristianhaug',
+    password : '',
+    database : 'inneplanter'
+  }
+})
+
+
+db.select('*').from('plants').then (data => {
+  console.log(data);
+});
 
 const app = express();
 
@@ -27,8 +43,8 @@ const storage = multer.diskStorage({
 //SENDING THE IMAGE TO GOOGLE CLOUD
 
 // Initialize Google Cloud Storage
-const storage = new Storage();
-const bucket = storage.bucket('your-bucket-name');
+// const storage = new Storage();
+// const bucket = storage.bucket('your-bucket-name');
 
  
 // Initialize Multer with the storage config
@@ -165,30 +181,34 @@ app.get("/", (req, res) => {
 
 app.post("/submit", upload.single('bilde'), (req, res) => {
     const { navn, slekt, vann, giftig, beskrivelse, id } = req.body;
-
-   try {
-       testDatabase.push({
-        navn: navn,
-         slekt: slekt,
-         vann: vann,
-         giftig: giftig,
-         beskrivelse: beskrivelse,
-         imagePath: `/images/${req.file.filename}`,
-         file: req.file,
-         id: id
-        })
+    db('plants')
+      .returning('*')
+      .insert ({
+          navn: navn,
+          slekt: slekt,
+          vann: vann,
+          giftig: true,
+          beskrivelse: beskrivelse,
+          imagepath: `/images/${req.file.filename}`,
+          id: id
+    }).then(plant => {
+      res.json(plant[0])
+      })
+      .catch(err => res.status(400).json(err))
+  })
+  //  try {
+  //      testDatabase.push({
+  //       navn: navn,
+  //        slekt: slekt,
+  //        vann: vann,
+  //        giftig: giftig,
+  //        beskrivelse: beskrivelse,
+  //        imagePath: `/images/${req.file.filename}`,
+  //        file: req.file,
+  //        id: id
+  //       })
        // console.log(testDatabase)
-       res.json({
-        message: 'Plant data and image uploaded successfully',
-        testDatabase
-
-    })
-       console.log(testDatabase)
        // .catch(err => res.status(400).json(err))
-   } catch (err) {
-    res.status(400).send(err)
-   }
-})
 
 app.get('/plantdatabase', (req, res) => {
     res.json(testDatabase)
