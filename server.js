@@ -4,6 +4,9 @@ const cors = require("cors");
 const path = require('path');
 const multer = require('multer')
 const knex = require ('knex');
+const sharp = require ('sharp');
+const {Storage} = require('@google-cloud/storage');
+const fs = require ('fs')
 // const { default: test } = require('node:test');
 
 const db = knex({
@@ -16,54 +19,83 @@ const db = knex({
   }
 })
 
-
-db.select('*').from('plants').then (data => {
-  console.log(data);
-});
-
 const app = express();
-
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Multer storage configuration
-const storage = multer.diskStorage({
-    // Destination: where the files will be saved
-    destination: (req, file, cb) => {
-      cb(null, 'public/images/'); // Make sure the 'uploads/' folder exists
-    },
-    // Filename: how the file will be named
-    filename: (req, file, cb) => {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      cb(null, uniqueSuffix + path.extname(file.originalname)); // Preserve the original extension
-    }
-  });
+
 
 
   //SET UP SERVER SIDE IMAGE RENDERING
 //SENDING THE IMAGE TO GOOGLE CLOUD
 
 // Initialize Google Cloud Storage
-// const storage = new Storage();
-// const bucket = storage.bucket('your-bucket-name');
+// const storage = new Storage({keyFilename: "bright-lattice-439207-u2-d896b7ca02fb.json"});
+// const bucketName = 'random-test1234-bucket-02';
 
- 
-// Initialize Multer with the storage config
-const upload = multer({
-    storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // Limit file size to 5MB
-    fileFilter: (req, file, cb) => {
-      // Only accept certain file types (e.g., images)
-      const filetypes = /jpeg|jpg|png|gif/;
-      const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-      const mimetype = filetypes.test(file.mimetype);
-  
-      if (mimetype && extname) {
-        return cb(null, true);
-      } else {
-        cb(new Error('Only image files are allowed!'));
-      }
-    }
-  }); 
+const upload = multer({ dest: 'public/images/' });
+
+
+
+// Copyright [yyyy] [name of copyright owner]
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+
+//     http://www.apache.org/licenses/LICENSE-2.0
+
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+
+function main(
+  destFileName = 'destFileName',
+  filePath = 'yourfilepath',
+  generationMatchPrecondition = 0
+) {
+    // The ID of your GCS bucket
+    const bucketName = 'random-test1234-bucket-02'
+
+    // The path to your file to upload
+    // const filePath = "public/images/ficuslyrata.jpg"
+
+    // The new ID for your GCS file
+    // const destFileName = 'file2.txt'
+
+    // Imports the Google Cloud client library
+    const {Storage} = require('@google-cloud/storage');
+
+    // Creates a client
+    const storage = new Storage({
+      projectId: 'bright-lattice-439207-u2',
+      credentials: require("/Users/kristianhaug/Desktop/Zero To Mastery/STAGE_2/inneplanter/inneplanter-api/bright-lattice-439207-u2-d896b7ca02fb.json")
+    });
+
+  async function uploadFile() {
+    const options = {
+      destination: destFileName,
+      // Optional:
+      // Set a generation-match precondition to avoid potential race conditions
+      // and data corruptions. The request to upload is aborted if the object's
+      // generation number does not match your precondition. For a destination
+      // object that does not yet exist, set the ifGenerationMatch precondition to 0
+      // If the destination object already exists in your bucket, set instead a
+      // generation-match precondition using its generation number.
+      preconditionOpts: {ifGenerationMatch: generationMatchPrecondition},
+    };
+
+    await storage.bucket(bucketName).upload(filePath, options);
+    console.log(`${filePath} uploaded to ${bucketName}`);
+  }
+
+  uploadFile().catch(console.error);
+  // [END storage_upload_file]
+}
+
+// main(...process.argv.slice(2));
 
 
 
@@ -171,6 +203,7 @@ const testDatabase = [
     }
     
 ]
+
 app.use(cors())
 app.use(express.json());
 
@@ -179,44 +212,75 @@ app.get("/", (req, res) => {
     res.json(testDatabase[testDatabase.length - 1])
 });
 
-app.post("/submit", upload.single('bilde'), (req, res) => {
-    const { navn, slekt, vann, giftig, beskrivelse, id } = req.body;
+
+app.post('/upload', upload.single('bilde'), async (req, res) => {
+  const { navn, slekt, vann, giftig, beskrivelse, id } = req.body;
+  const { file } = req;
+  if (!navn || !slekt || !vann || !giftig || !beskrivelse || !id) {
+    return res.status(400).json('incorrect form submission')
+  }
+  
+  let giftigVar = null;
+  if (giftig === 'Ja') {
+    giftigVar = true
+  } else {
+    giftigVar = false
+  }
+
+
+  const imageName = Date.now() + path.extname(file.originalname);
+    try {
+      main(
+        destFileName = imageName,
+        filePath = file.path) 
+
+    } catch(err) {
+      res.json(err)
+    }      
+    
     db('plants')
       .returning('*')
       .insert ({
-          navn: navn,
-          slekt: slekt,
-          vann: vann,
-          giftig: true,
-          beskrivelse: beskrivelse,
-          imagepath: `/images/${req.file.filename}`,
-          id: id
-    }).then(plant => {
-      res.json(plant[0])
-      })
-      .catch(err => res.status(400).json(err))
-  })
-  //  try {
-  //      testDatabase.push({
-  //       navn: navn,
-  //        slekt: slekt,
-  //        vann: vann,
-  //        giftig: giftig,
-  //        beskrivelse: beskrivelse,
-  //        imagePath: `/images/${req.file.filename}`,
-  //        file: req.file,
-  //        id: id
-  //       })
-       // console.log(testDatabase)
-       // .catch(err => res.status(400).json(err))
+              navn: navn,
+              slekt: slekt,
+              vann: vann,
+              giftig: giftigVar,
+              beskrivelse: beskrivelse,
+              imagepath: `https://storage.googleapis.com/random-test1234-bucket-02/${imageName}`,
+              id: id
+        }).then(plant => {
+          res.json(plant[0])
+          })
+          .catch(err => res.status(400).json(err))
 
-app.get('/plantdatabase', (req, res) => {
-    res.json(testDatabase)
+
 })
 
-// app.get("/plants", (req, res) => {
-//     res.json(testDatabase[0])
-// })
+//DETTE ER DEN EKTE ⬇️
+
+// app.post("/submit", upload.single('bilde'), (req, res) => {
+//     const { navn, slekt, vann, giftig, beskrivelse, id } = req.body;
+//     db('plants')
+//       .returning('*')
+//       .insert ({
+//           navn: navn,
+//           slekt: slekt,
+//           vann: vann,
+//           giftig: true,
+//           beskrivelse: beskrivelse,
+//           imagepath: `/images/${req.file.filename}`,
+//           id: id
+//     }).then(plant => {
+//       res.json(plant[0])
+//       })
+//       .catch(err => res.status(400).json(err))
+//   })
+
+app.get('/plantdatabase', (req, res) => {
+    db.select('*').from('plants').then (data => res.json(data));
+});
+
+
 
 app.listen(3000, () => {
     console.log('app is running on port 3000')
