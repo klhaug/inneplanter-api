@@ -16,10 +16,8 @@ app.use(express.json());
 const db = knex({
   client: 'pg',
   connection: {
-    host : 'localhost', // HER Må VI OPPDATERE NÅR VI SKAL HOSTE DETTE ET ANNET STED
-    user : 'kristianhaug',
-    password : '',
-    database : 'inneplanter'
+    host : process.env.DATABASE_URL, // HER Må VI OPPDATERE NÅR VI SKAL HOSTE DETTE ET ANNET STED
+    ssl: true, 
   }
 })
 
