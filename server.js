@@ -1,3 +1,4 @@
+
 const express = require('express');
 const cors = require("cors");
 const path = require('path');
@@ -5,6 +6,12 @@ const multer = require('multer')
 const knex = require ('knex');
 const sharp = require ('sharp');
 const {Storage} = require('@google-cloud/storage');
+
+
+const app = express();
+app.use(cors())
+app.use(express.json());
+
 
 const db = knex({
   client: 'pg',
@@ -16,18 +23,10 @@ const db = knex({
   }
 })
 
-const app = express();
-
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(cors())
-app.use(express.json());
-
-
-
 
 
 const upload = multer({ dest: 'public/images/' });
-
 
 
 // Copyright [yyyy] [name of copyright owner]
@@ -92,9 +91,9 @@ function main(
 
 //API ENDEPUNTKER (??)
 
-app.get("/", (req, res) => {
-    res.json(testDatabase[testDatabase.length - 1])
-});
+// app.get("/", (req, res) => {
+//     res.json(testDatabase[testDatabase.length - 1])
+// });
 
 
 app.post('/upload', upload.single('bilde'), async (req, res) => {
@@ -146,7 +145,7 @@ app.get('/plantdatabase', (req, res) => {
 });
 
 
-
+const DATABASE_URL = process.env.DATABASE_URL;
 app.listen(3000, () => {
-    console.log('app is running on port 3000')
+    console.log(`app is running on port ${DATABASE_URL}`)
 });
