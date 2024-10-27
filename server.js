@@ -91,9 +91,9 @@ function main(
 
 //API ENDEPUNTKER (??)
 
-// app.get("/", (req, res) => {
-//     res.json(testDatabase[testDatabase.length - 1])
-// });
+app.get("/", (req, res) => {
+    res.json("It's working!")
+});
 
 
 app.post('/upload', upload.single('bilde'), async (req, res) => {
@@ -146,6 +146,7 @@ app.get('/plantdatabase', (req, res) => {
 
 
 const DATABASE_URL = process.env.DATABASE_URL;
-app.listen(3000, () => {
-    console.log(`app is running on port ${DATABASE_URL}`)
+
+app.listen(process.env.PORT || 3000, () => {
+    console.log(`app is running on port ${process.env.PORT}`)
 });
