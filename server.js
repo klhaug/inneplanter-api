@@ -89,7 +89,6 @@ function main(
 }
 
 
-//API ENDEPUNTKER (??)
 
 app.get("/", (req, res) => {
     res.json("It's working!")
