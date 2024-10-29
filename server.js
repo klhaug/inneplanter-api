@@ -62,7 +62,7 @@ function main(
     // Creates a client
     const storage = new Storage({
       projectId: 'bright-lattice-439207-u2',
-      credentials: require("/Users/kristianhaug/Desktop/Zero To Mastery/STAGE_2/inneplanter/inneplanter-api/bright-lattice-439207-u2-d896b7ca02fb.json")
+      credentials: //THIS IS SECRET
     });
 
   async function uploadFile() {
